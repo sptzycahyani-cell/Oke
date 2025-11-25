@@ -48,8 +48,8 @@ screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 220, 0, 205)
-frame.Position = UDim2.new(0.4, -110, 0.5, -80)
+frame.Size = UDim2.new(0, 220, 0, 250)
+frame.Position = UDim2.new(0.4, -110, 0.5, -100)
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 frame.BorderSizePixel = 0
 frame.Active = true
@@ -70,10 +70,10 @@ title.Font = Enum.Font.GothamBold
 title.TextSize = 16
 title.Parent = frame
 
--- BUTTON SUMMIT (Close GUI)
+-- BUTTON CLOSE GUI
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 160, 0, 40)
-closeBtn.Position = UDim2.new(0.5, -80, 0.5, -40)
+closeBtn.Position = UDim2.new(0.5, -80, 0.5, -50)
 closeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 closeBtn.Text = "SUMMIT"
 closeBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -202,13 +202,16 @@ Players.PlayerRemoving:Connect(function(plr)
 end)
 
 -- =========================================================
--- =============== BRING PART FLY FEATURE ==================
+-- =============== DUAL MODE BRING PART FEATURE ===========
 -- =========================================================
 
-local bringPartEnabled = false
+local bringMode = "OFF" -- OFF / SINGLE / BLACKHOLE
 local attachedPart = nil
 local attachment0, attachment1 = nil, nil
 local alignPos, alignOri = nil, nil
+
+local blackholeRadius = 30
+local blackholeForce = 200
 
 -- UI BUTTON BRING PART
 local bringButton = Instance.new("TextButton")
@@ -225,11 +228,10 @@ local bringCorner = Instance.new("UICorner")
 bringCorner.CornerRadius = UDim.new(0, 10)
 bringCorner.Parent = bringButton
 
--- Scan part terdekat & unanchored
+-- Helper: Scan nearest unanchored part
 local function scanNearestUnanchored()
     local char = player.Character
     if not char then return end
-
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
@@ -246,7 +248,7 @@ local function scanNearestUnanchored()
     return nearest
 end
 
--- Attach part
+-- Attach single part
 local function attachPart(part)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp or not part then return end
@@ -271,7 +273,7 @@ local function attachPart(part)
     attachedPart = part
 end
 
--- Hapus attach
+-- Detach part
 local function detachPart()
     if attachedPart then
         for _, v in pairs(attachedPart:GetChildren()) do
@@ -280,18 +282,16 @@ local function detachPart()
             end
         end
     end
-
     if attachment0 then attachment0:Destroy() end
     attachedPart = nil
 end
 
--- BUTTON ON/OFF ACTION
+-- Toggle mode
 bringButton.MouseButton1Click:Connect(function()
-    bringPartEnabled = not bringPartEnabled
-
-    if bringPartEnabled then
+    if bringMode == "OFF" then
+        bringMode = "SINGLE"
         bringButton.BackgroundColor3 = Color3.fromRGB(60, 160, 60)
-        bringButton.Text = "BRING PART : ON"
+        bringButton.Text = "BRING PART : SINGLE"
 
         local target = scanNearestUnanchored()
         if target then
@@ -299,12 +299,39 @@ bringButton.MouseButton1Click:Connect(function()
         else
             bringButton.Text = "NO PART FOUND"
             task.wait(1)
-            bringButton.Text = "BRING PART : ON"
+            bringButton.Text = "BRING PART : SINGLE"
         end
+
+    elseif bringMode == "SINGLE" then
+        detachPart()
+        bringMode = "BLACKHOLE"
+        bringButton.Text = "BRING PART : BLACKHOLE"
+
+        spawn(function()
+            while bringMode == "BLACKHOLE" do
+                local char = player.Character
+                if not char then break end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if not hrp then break end
+
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    if obj:IsA("BasePart") and not obj.Anchored and obj.CanCollide then
+                        local dist = (obj.Position - hrp.Position).Magnitude
+                        if dist <= blackholeRadius then
+                            local direction = (hrp.Position - obj.Position).Unit
+                            obj.Velocity = direction * blackholeForce
+                        end
+                    end
+                end
+                task.wait(0.03)
+            end
+        end)
+
     else
+        detachPart()
+        bringMode = "OFF"
         bringButton.BackgroundColor3 = Color3.fromRGB(120, 50, 50)
         bringButton.Text = "BRING PART : OFF"
-        detachPart()
     end
 end)
 
