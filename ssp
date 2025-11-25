@@ -1,9 +1,7 @@
--- Script by Xraxor (Edit by ChatGPT)
+-- Script by Xraxor (Cleaned by ChatGPT)
 
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local player = Players.LocalPlayer
 
@@ -41,21 +39,10 @@ do
 end
 
 -- ============================
--- STATUS VALUE AUTO FARM
--- ============================
-local statusValue = ReplicatedStorage:FindFirstChild("AutoFarmStatus")
-if not statusValue then
-    statusValue = Instance.new("BoolValue")
-    statusValue.Name = "AutoFarmStatus"
-    statusValue.Value = false
-    statusValue.Parent = ReplicatedStorage
-end
-
--- ============================
 -- GUI UTAMA
 -- ============================
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AutoFarmGUI"
+screenGui.Name = "MainGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
@@ -72,7 +59,7 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 15)
 corner.Parent = frame
 
--- Title
+-- TITLE
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.BackgroundTransparency = 1
@@ -82,7 +69,7 @@ title.Font = Enum.Font.GothamBold
 title.TextSize = 16
 title.Parent = frame
 
--- Button SUMMIT
+-- BUTTON (Close GUI)
 local button = Instance.new("TextButton")
 button.Size = UDim2.new(0, 160, 0, 40)
 button.Position = UDim2.new(0.5, -80, 0.5, -20)
@@ -97,218 +84,7 @@ local buttonCorner = Instance.new("UICorner")
 buttonCorner.CornerRadius = UDim.new(0, 10)
 buttonCorner.Parent = button
 
--- =======================================
--- GUI SAMPING (Teleport Pos + Teleport Player)
--- =======================================
-local flagButton = Instance.new("ImageButton")
-flagButton.Size = UDim2.new(0, 20, 0, 20)
-flagButton.Position = UDim2.new(1, -30, 0, 5)
-flagButton.BackgroundTransparency = 1
-flagButton.Image = "rbxassetid://6031097229"
-flagButton.Parent = frame
-
-local sideFrame = Instance.new("Frame")
-sideFrame.Size = UDim2.new(0, 170, 0, 250)
-sideFrame.Position = UDim2.new(1, 10, 0, 0)
-sideFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-sideFrame.Visible = false
-sideFrame.Parent = frame
-
-local sideCorner = Instance.new("UICorner")
-sideCorner.CornerRadius = UDim.new(0, 12)
-sideCorner.Parent = sideFrame
-
-local scrollFrame = Instance.new("ScrollingFrame")
-scrollFrame.Size = UDim2.new(1, 0, 1, -5)
-scrollFrame.Position = UDim2.new(0, 0, 0, 5)
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-scrollFrame.ScrollBarThickness = 6
-scrollFrame.BackgroundTransparency = 1
-scrollFrame.Parent = sideFrame
-
-local listLayout = Instance.new("UIListLayout")
-listLayout.Padding = UDim.new(0, 5)
-listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-listLayout.Parent = scrollFrame
-
-listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 10)
-end)
-
-flagButton.MouseButton1Click:Connect(function()
-    sideFrame.Visible = not sideFrame.Visible
-end)
-
--- ============================
--- LIST TELEPORT POS
--- ============================
-local teleportList = {
-    {name = "Teleport Pos 1", pos = Vector3.new(5.91, 13.20, -401.66)},
-    {name = "Teleport Pos 2", pos = Vector3.new(-183.98, 128.67, 409.35)},
-    {name = "Teleport Pos 3", pos = Vector3.new(-165.62, 230.20, 653.26)},
-    {name = "Teleport Pos 4", pos = Vector3.new(-37.75, 407.22, 616.05)},
-    {name = "Teleport Pos 5", pos = Vector3.new(130.81, 652.40, 613.81)},
-    {name = "Teleport Pos 6", pos = Vector3.new(-246.32, 666.33, 734.26)},
-    {name = "Teleport Pos 7", pos = Vector3.new(-684.34, 641.34, 867.82)},
-    {name = "Teleport Pos 8", pos = Vector3.new(-658.35, 689.06, 1458.58)},
-    {name = "Teleport Pos 9", pos = Vector3.new(-507.38, 903.54, 1867.65)},
-    {name = "Teleport Pos 10", pos = Vector3.new(60.53, 950.50, 2088.49)},
-    {name = "Teleport Pos 11", pos = Vector3.new(51.97, 982.12, 2450.11)},
-    {name = "Teleport Pos 12", pos = Vector3.new(72.71, 1097.56, 2456.81)},
-    {name = "Teleport Pos 13", pos = Vector3.new(262.32, 1270.73, 2037.32)},
-    {name = "Teleport Pos 14", pos = Vector3.new(-418.16, 1302.79, 2393.94)},
-    {name = "Teleport Pos 15", pos = Vector3.new(-773.07, 1314.52, 2664.33)},
-    {name = "Teleport Pos 16", pos = Vector3.new(-837.85, 1475.55, 2625.13)},
-    {name = "Teleport Pos 17", pos = Vector3.new(-468.79, 1466.25, 2769.38)},
-    {name = "Teleport Pos 18", pos = Vector3.new(-385.24, 1640.90, 2794.93)},
-    {name = "Teleport Pos 19", pos = Vector3.new(-385.24, 1640.90, 2794.93)},
-    {name = "Teleport Pos 20", pos = Vector3.new(-208.03, 1666.32, 2749.07)},
-    {name = "Teleport Pos 21", pos = Vector3.new(-232.37, 1742.68, 2792.08)},
-    {name = "Teleport Pos 22", pos = Vector3.new(-424.28, 1741.32, 2797.70)},
-    {name = "Teleport Pos 23", pos = Vector3.new(-422.88, 1713.02, 3419.81)},
-    {name = "Teleport Pos 24", pos = Vector3.new(70.72, 1719.29, 3427.58)},
-    {name = "Teleport Pos 25", pos = Vector3.new(436.34, 1721.15, 3430.44)},
-    {name = "Teleport Pos 26", pos = Vector3.new(625.27, 1799.83, 3432.84)},
-    {name = "PUNCAK", pos = Vector3.new(780.47, 2183.38, 3945.07)},
-}
-
-local function makeTeleportButton(name, pos)
-    local tpButton = Instance.new("TextButton")
-    tpButton.Size = UDim2.new(0, 140, 0, 35)
-    tpButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    tpButton.Text = name
-    tpButton.TextColor3 = Color3.new(1, 1, 1)
-    tpButton.Font = Enum.Font.SourceSansBold
-    tpButton.TextSize = 14
-    tpButton.Parent = scrollFrame
-
-    local tpCorner = Instance.new("UICorner")
-    tpCorner.CornerRadius = UDim.new(0, 8)
-    tpCorner.Parent = tpButton
-
-    tpButton.MouseButton1Click:Connect(function()
-        local character = player.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            character.HumanoidRootPart.CFrame = CFrame.new(pos)
-        end
-    end)
-end
-
-for _, d in ipairs(teleportList) do
-    makeTeleportButton(d.name, d.pos)
-end
-
--- ============================
--- PLAYER LIST TELEPORT
--- ============================
-local function createPlayerItem(plr)
-    local item = Instance.new("Frame")
-    item.Size = UDim2.new(1, -10, 0, 50)
-    item.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    item.Parent = scrollFrame
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
-    corner.Parent = item
-
-    local img = Instance.new("ImageLabel")
-    img.Size = UDim2.new(0, 40, 0, 40)
-    img.Position = UDim2.new(0, 5, 0.5, -20)
-    img.BackgroundTransparency = 1
-    img.Image = "rbxthumb://type=AvatarHeadShot&id=" .. plr.UserId .. "&w=150&h=150"
-    img.Parent = item
-
-    local nameLabel = Instance.new("TextLabel")
-    nameLabel.Size = UDim2.new(1, -100, 1, 0)
-    nameLabel.Position = UDim2.new(0, 50, 0, 0)
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.Text = plr.Name
-    nameLabel.TextColor3 = Color3.new(1, 1, 1)
-    nameLabel.Font = Enum.Font.GothamBold
-    nameLabel.TextSize = 14
-    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-    nameLabel.Parent = item
-
-    local tpBtn = Instance.new("TextButton")
-    tpBtn.Size = UDim2.new(0, 60, 0, 30)
-    tpBtn.Position = UDim2.new(1, -70, 0.5, -15)
-    tpBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 255)
-    tpBtn.Text = "TP"
-    tpBtn.TextColor3 = Color3.new(1,1,1)
-    tpBtn.Font = Enum.Font.GothamBold
-    tpBtn.TextSize = 14
-    tpBtn.Parent = item
-
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.Parent = tpBtn
-
-    tpBtn.MouseButton1Click:Connect(function()
-        local myChar = player.Character
-        local targetChar = plr.Character
-        if myChar and targetChar and myChar:FindFirstChild("HumanoidRootPart") and targetChar:FindFirstChild("HumanoidRootPart") then
-            myChar.HumanoidRootPart.CFrame = targetChar.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
-        end
-    end)
-end
-
-for _,plr in pairs(Players:GetPlayers()) do
-    if plr ~= player then
-        createPlayerItem(plr)
-    end
-end
-
-Players.PlayerAdded:Connect(function(plr)
-    if plr ~= player then createPlayerItem(plr) end
-end)
-
-Players.PlayerRemoving:Connect(function(plr)
-    for _,v in pairs(scrollFrame:GetChildren()) do
-        if v:IsA("Frame") then
-            local nameLabel = v:FindFirstChildWhichIsA("TextLabel")
-            if nameLabel and nameLabel.Text == plr.Name then
-                v:Destroy()
-            end
-        end
-    end
-end)
-
--- ============================
--- AUTO FARM SYSTEM
--- ============================
-local position1 = Vector3.new(625.27, 1799.83, 3432.84)
-local position2 = Vector3.new(780.47, 2183.38, 3945.07)
-
-local teleporting = false
-
-local function teleportTo(pos)
-    local char = player.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        char.HumanoidRootPart.CFrame = CFrame.new(pos)
-    end
-end
-
-local function autoFarmLoop()
-    teleportTo(position1)
-    task.wait(2)
-    teleportTo(position2)
-    task.wait(1)
-    TeleportService:Teleport(game.PlaceId, player)
-end
-
-local function toggleAutoFarm(state)
-    teleporting = state
-    statusValue.Value = state
-    if teleporting then
-        button.Text = "RUNNING..."
-        button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-        task.spawn(autoFarmLoop)
-    else
-        button.Text = "SUMMIT"
-        button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    end
-end
-
+-- BUTTON FUNCTION: CLOSE GUI
 button.MouseButton1Click:Connect(function()
-    toggleAutoFarm(not teleporting)
+    screenGui:Destroy()
 end)
