@@ -1,5 +1,6 @@
 --====================================================
 -- Script by Xraxor (Cleaned, Optimized by ChatGPT)
+-- + Added Clone Feature
 --====================================================
 
 local TweenService = game:GetService("TweenService")
@@ -48,8 +49,8 @@ screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 220, 0, 250)
-frame.Position = UDim2.new(0.4, -110, 0.5, -100)
+frame.Size = UDim2.new(0, 250, 0, 250)
+frame.Position = UDim2.new(0.4, -125, 0.5, -100)
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 frame.BorderSizePixel = 0
 frame.Active = true
@@ -97,7 +98,7 @@ flagButton.Parent = frame
 
 -- PLAYER LIST PANEL
 local sideFrame = Instance.new("Frame")
-sideFrame.Size = UDim2.new(0, 170, 0, 240)
+sideFrame.Size = UDim2.new(0, 200, 0, 240)
 sideFrame.Position = UDim2.new(1, 10, 0, 0)
 sideFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 sideFrame.Visible = false
@@ -129,11 +130,11 @@ flagButton.MouseButton1Click:Connect(function()
 end)
 
 -- ============================
--- TELEPORT PLAYER FEATURE
+-- TELEPORT & CLONE PLAYER FEATURE
 -- ============================
 local function createPlayerItem(plr)
     local item = Instance.new("Frame")
-    item.Size = UDim2.new(1, -10, 0, 50)
+    item.Size = UDim2.new(1, -10, 0, 60)
     item.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
     item.Parent = scrollFrame
 
@@ -149,7 +150,7 @@ local function createPlayerItem(plr)
     img.Parent = item
 
     local nameLabel = Instance.new("TextLabel")
-    nameLabel.Size = UDim2.new(1, -100, 1, 0)
+    nameLabel.Size = UDim2.new(1, -130, 1, 0)
     nameLabel.Position = UDim2.new(0, 50, 0, 0)
     nameLabel.BackgroundTransparency = 1
     nameLabel.Text = plr.Name
@@ -159,9 +160,10 @@ local function createPlayerItem(plr)
     nameLabel.TextXAlignment = Enum.TextXAlignment.Left
     nameLabel.Parent = item
 
+    -- TP BUTTON
     local tpBtn = Instance.new("TextButton")
-    tpBtn.Size = UDim2.new(0, 60, 0, 30)
-    tpBtn.Position = UDim2.new(1, -70, 0.5, -15)
+    tpBtn.Size = UDim2.new(0, 50, 0, 25)
+    tpBtn.Position = UDim2.new(1, -110, 0.5, -12)
     tpBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 255)
     tpBtn.Text = "TP"
     tpBtn.TextColor3 = Color3.new(1,1,1)
@@ -169,14 +171,39 @@ local function createPlayerItem(plr)
     tpBtn.TextSize = 14
     tpBtn.Parent = item
 
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.Parent = tpBtn
+    local tpCorner = Instance.new("UICorner")
+    tpCorner.Parent = tpBtn
 
     tpBtn.MouseButton1Click:Connect(function()
         local myChar = player.Character
         local targetChar = plr.Character
         if myChar and targetChar and myChar:FindFirstChild("HumanoidRootPart") and targetChar:FindFirstChild("HumanoidRootPart") then
             myChar.HumanoidRootPart.CFrame = targetChar.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
+        end
+    end)
+
+    -- CLONE BUTTON
+    local cloneBtn = Instance.new("TextButton")
+    cloneBtn.Size = UDim2.new(0, 50, 0, 25)
+    cloneBtn.Position = UDim2.new(1, -50, 0.5, -12)
+    cloneBtn.BackgroundColor3 = Color3.fromRGB(255, 120, 60)
+    cloneBtn.Text = "Clone"
+    cloneBtn.TextColor3 = Color3.new(1,1,1)
+    cloneBtn.Font = Enum.Font.GothamBold
+    cloneBtn.TextSize = 14
+    cloneBtn.Parent = item
+
+    local cloneCorner = Instance.new("UICorner")
+    cloneCorner.Parent = cloneBtn
+
+    cloneBtn.MouseButton1Click:Connect(function()
+        local targetChar = plr.Character
+        if targetChar then
+            local clone = targetChar:Clone()
+            clone.Parent = workspace
+            if clone:FindFirstChild("HumanoidRootPart") then
+                clone:SetPrimaryPartCFrame(player.Character.HumanoidRootPart.CFrame + Vector3.new(5,0,0))
+            end
         end
     end)
 end
@@ -198,156 +225,6 @@ Players.PlayerRemoving:Connect(function(plr)
                 v:Destroy()
             end
         end
-    end
-end)
-
--- =========================================================
--- =============== DUAL MODE BRING PART FEATURE ===========
--- =========================================================
-
-local bringMode = "OFF" -- OFF / SINGLE / BLACKHOLE
-local attachedPart = nil
-local attachment0, attachment1 = nil, nil
-local alignPos, alignOri = nil, nil
-
-local blackholeRadius = 30
-local blackholeForce = 200
-
--- UI BUTTON BRING PART
-local bringButton = Instance.new("TextButton")
-bringButton.Size = UDim2.new(0, 160, 0, 35)
-bringButton.Position = UDim2.new(0.5, -80, 0.5, 10)
-bringButton.BackgroundColor3 = Color3.fromRGB(120, 50, 50)
-bringButton.Text = "BRING PART : OFF"
-bringButton.TextColor3 = Color3.new(1, 1, 1)
-bringButton.Font = Enum.Font.GothamBold
-bringButton.TextSize = 14
-bringButton.Parent = frame
-
-local bringCorner = Instance.new("UICorner")
-bringCorner.CornerRadius = UDim.new(0, 10)
-bringCorner.Parent = bringButton
-
--- Helper: Scan nearest unanchored part
-local function scanNearestUnanchored()
-    local char = player.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    local nearest, minDist = nil, 30
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and not obj.Anchored and obj.CanCollide then
-            local dist = (obj.Position - hrp.Position).Magnitude
-            if dist < minDist then
-                minDist = dist
-                nearest = obj
-            end
-        end
-    end
-    return nearest
-end
-
--- Attach single part
-local function attachPart(part)
-    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp or not part then return end
-
-    attachment0 = Instance.new("Attachment", hrp)
-    attachment0.Position = Vector3.new(0, -2, -3)
-
-    attachment1 = Instance.new("Attachment", part)
-
-    alignPos = Instance.new("AlignPosition", part)
-    alignPos.Attachment0 = attachment1
-    alignPos.Attachment1 = attachment0
-    alignPos.Responsiveness = 200
-    alignPos.MaxForce = 1000000
-
-    alignOri = Instance.new("AlignOrientation", part)
-    alignOri.Attachment0 = attachment1
-    alignOri.Attachment1 = attachment0
-    alignOri.Responsiveness = 200
-    alignOri.MaxTorque = 1000000
-
-    attachedPart = part
-end
-
--- Detach part
-local function detachPart()
-    if attachedPart then
-        for _, v in pairs(attachedPart:GetChildren()) do
-            if v:IsA("Attachment") or v:IsA("AlignPosition") or v:IsA("AlignOrientation") then
-                v:Destroy()
-            end
-        end
-    end
-    if attachment0 then attachment0:Destroy() end
-    attachedPart = nil
-end
-
--- Toggle mode
-bringButton.MouseButton1Click:Connect(function()
-    if bringMode == "OFF" then
-        bringMode = "SINGLE"
-        bringButton.BackgroundColor3 = Color3.fromRGB(60, 160, 60)
-        bringButton.Text = "BRING PART : SINGLE"
-
-        local target = scanNearestUnanchored()
-        if target then
-            attachPart(target)
-        else
-            bringButton.Text = "NO PART FOUND"
-            task.wait(1)
-            bringButton.Text = "BRING PART : SINGLE"
-        end
-
-    elseif bringMode == "SINGLE" then
-        detachPart()
-        bringMode = "BLACKHOLE"
-        bringButton.Text = "BRING PART : BLACKHOLE"
-
-        spawn(function()
-            while bringMode == "BLACKHOLE" do
-                local char = player.Character
-                if not char then break end
-                local hrp = char:FindFirstChild("HumanoidRootPart")
-                if not hrp then break end
-
-                for _, obj in ipairs(workspace:GetDescendants()) do
-                    if obj:IsA("BasePart") and not obj.Anchored and obj.CanCollide then
-                        local dist = (obj.Position - hrp.Position).Magnitude
-                        if dist <= blackholeRadius then
-                            -- Remove existing constraints to avoid resistance
-                            for _, c in pairs(obj:GetChildren()) do
-                                if c:IsA("Weld") or c:IsA("Motor6D") or c:IsA("AlignPosition") or c:IsA("AlignOrientation") then
-                                    c:Destroy()
-                                end
-                            end
-
-                            -- Brutal pull force based on distance (closer = stronger)
-                            local forceDir = (hrp.Position - obj.Position).Unit
-                            local forceMag = blackholeForce * (1 + (blackholeRadius - dist)/blackholeRadius)
-                            obj.Velocity = forceDir * forceMag
-
-                            -- Optional chaotic spin
-                            obj.RotVelocity = Vector3.new(
-                                math.random(-5,5),
-                                math.random(-5,5),
-                                math.random(-5,5)
-                            )
-                        end
-                    end
-                end
-                task.wait(0.03)
-            end
-        end)
-
-    else
-        detachPart()
-        bringMode = "OFF"
-        bringButton.BackgroundColor3 = Color3.fromRGB(120, 50, 50)
-        bringButton.Text = "BRING PART : OFF"
     end
 end)
 
