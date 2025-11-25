@@ -5,7 +5,7 @@ local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
 -------------------------------------------------------------
--- INTRO
+-- INTRO (OPSIONAL, MASIH ADA)
 -------------------------------------------------------------
 do
     local introGui = Instance.new("ScreenGui")
@@ -23,32 +23,55 @@ do
     introLabel.Font = Enum.Font.GothamBold
     introLabel.Parent = introGui
 
-    TweenService:Create(introLabel, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+    TweenService:Create(introLabel,TweenInfo.new(1.5,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut,-1,true),
         {Position = UDim2.new(0.5, -150, 0.42, 0)}):Play()
 
-    TweenService:Create(introLabel, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-        {TextColor3 = Color3.fromRGB(0, 0, 0)}):Play()
+    TweenService:Create(introLabel,TweenInfo.new(2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut,-1,true),
+        {TextColor3 = Color3.fromRGB(0,0,0)}):Play()
 
     task.wait(2)
-    TweenService:Create(introLabel, TweenInfo.new(0.5),
-        {TextTransparency = 1}):Play().Completed:Connect(function()
+    TweenService:Create(introLabel,TweenInfo.new(0.5),{TextTransparency = 1}):Play().Completed:Connect(function()
         introGui:Destroy()
     end)
 end
 
 -------------------------------------------------------------
--- MAIN GUI
+-- 🔥 FIRE FLOATING ICON (MUNCUL PERTAMA)
+-------------------------------------------------------------
+local fireGui = Instance.new("ScreenGui")
+fireGui.Name = "FireIconGUI"
+fireGui.ResetOnSpawn = false
+fireGui.Parent = player:WaitForChild("PlayerGui")
+
+local fireButton = Instance.new("TextButton")
+fireButton.Size = UDim2.new(0, 50, 0, 50)
+fireButton.Position = UDim2.new(0.05, 0, 0.5, 0)
+fireButton.BackgroundColor3 = Color3.fromRGB(255, 100, 50)
+fireButton.Text = "🔥"
+fireButton.TextScaled = true
+fireButton.Font = Enum.Font.GothamBold
+fireButton.TextColor3 = Color3.new(1,1,1)
+fireButton.Active = true
+fireButton.Draggable = true
+fireButton.Parent = fireGui
+
+local fireCorner = Instance.new("UICorner")
+fireCorner.CornerRadius = UDim.new(0, 12)
+fireCorner.Parent = fireButton
+
+-------------------------------------------------------------
+-- MAIN GUI (HIDDEN AWAL)
 -------------------------------------------------------------
 local mainGui = Instance.new("ScreenGui")
 mainGui.Name = "MainGUI"
 mainGui.ResetOnSpawn = false
+mainGui.Enabled = false      -- ❗ Hidden terlebih dahulu
 mainGui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 220, 0, 160)
 frame.Position = UDim2.new(0.4, -110, 0.5, -80)
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-frame.BorderSizePixel = 0
 frame.Active = true
 frame.Draggable = true
 frame.Parent = mainGui
@@ -93,8 +116,8 @@ iconButton.Parent = frame
 local sideFrame = Instance.new("Frame")
 sideFrame.Size = UDim2.new(0, 170, 0, 240)
 sideFrame.Position = UDim2.new(1, 10, 0, 0)
-sideFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 sideFrame.Visible = false
+sideFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
 sideFrame.Parent = frame
 
 local sideCorner = Instance.new("UICorner")
@@ -104,9 +127,9 @@ sideCorner.Parent = sideFrame
 local scroll = Instance.new("ScrollingFrame")
 scroll.Size = UDim2.new(1, 0, 1, -5)
 scroll.Position = UDim2.new(0, 0, 0, 5)
-scroll.BackgroundTransparency = 1
 scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 scroll.ScrollBarThickness = 6
+scroll.BackgroundTransparency = 1
 scroll.Parent = sideFrame
 
 local layout = Instance.new("UIListLayout")
@@ -124,8 +147,10 @@ iconButton.MouseButton1Click:Connect(function()
 end)
 
 -------------------------------------------------------------
--- TELEPORT PLAYER
+-- TELEPORT PLAYER LIST
 -------------------------------------------------------------
+local PlayersService = game:GetService("Players")
+
 local function addPlayer(plr)
     local item = Instance.new("Frame")
     item.Size = UDim2.new(1, -10, 0, 50)
@@ -136,19 +161,19 @@ local function addPlayer(plr)
     corner.CornerRadius = UDim.new(0, 12)
     corner.Parent = item
 
-    local head = Instance.new("ImageLabel")
-    head.Size = UDim2.new(0, 40, 0, 40)
-    head.Position = UDim2.new(0, 5, 0.5, -20)
-    head.Image = "rbxthumb://type=AvatarHeadShot&id="..plr.UserId.."&w=150&h=150"
-    head.BackgroundTransparency = 1
-    head.Parent = item
+    local img = Instance.new("ImageLabel")
+    img.Size = UDim2.new(0, 40, 0, 40)
+    img.Position = UDim2.new(0, 5, 0.5, -20)
+    img.Image = "rbxthumb://type=AvatarHeadShot&id="..plr.UserId.."&w=150&h=150"
+    img.BackgroundTransparency = 1
+    img.Parent = item
 
     local name = Instance.new("TextLabel")
     name.Size = UDim2.new(1, -100, 1, 0)
     name.Position = UDim2.new(0, 50, 0, 0)
     name.Text = plr.Name
+    name.TextColor3 = Color3.new(1,1,1)
     name.BackgroundTransparency = 1
-    name.TextColor3 = Color3.new(1, 1, 1)
     name.Font = Enum.Font.GothamBold
     name.TextSize = 14
     name.TextXAlignment = Enum.TextXAlignment.Left
@@ -160,75 +185,51 @@ local function addPlayer(plr)
     tp.Text = "TP"
     tp.Font = Enum.Font.GothamBold
     tp.TextSize = 14
-    tp.TextColor3 = Color3.new(1, 1, 1)
-    tp.BackgroundColor3 = Color3.fromRGB(60, 120, 255)
+    tp.TextColor3 = Color3.new(1,1,1)
+    tp.BackgroundColor3 = Color3.fromRGB(60,120,255)
     tp.Parent = item
 
     local tpCorner = Instance.new("UICorner")
     tpCorner.Parent = tp
 
     tp.MouseButton1Click:Connect(function()
-        local me = player.Character
+        local myChar = player.Character
         local target = plr.Character
-        if me and target and me:FindFirstChild("HumanoidRootPart") and target:FindFirstChild("HumanoidRootPart") then
-            me.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame + Vector3.new(0,2,0)
+        if myChar and target and myChar:FindFirstChild("HumanoidRootPart") and target:FindFirstChild("HumanoidRootPart") then
+            myChar.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame + Vector3.new(0,2,0)
         end
     end)
 end
 
-for _,plr in pairs(Players:GetPlayers()) do
-    if plr ~= player then
-        addPlayer(plr)
-    end
+for _,plr in pairs(PlayersService:GetPlayers()) do
+    if plr ~= player then addPlayer(plr) end
 end
 
-Players.PlayerAdded:Connect(function(plr)
+PlayersService.PlayerAdded:Connect(function(plr)
 	if plr ~= player then addPlayer(plr) end
 end)
 
-Players.PlayerRemoving:Connect(function(plr)
+PlayersService.PlayerRemoving:Connect(function(plr)
 	for _,v in ipairs(scroll:GetChildren()) do
 		if v:IsA("Frame") then
-			local n = v:FindFirstChildWhichIsA("TextLabel")
-			if n and n.Text == plr.Name then v:Destroy() end
+			local label = v:FindFirstChildWhichIsA("TextLabel")
+			if label and label.Text == plr.Name then v:Destroy() end
 		end
 	end
 end)
 
 -------------------------------------------------------------
--- 🔥 FIRE ICON (EMOJI, DRAG, OPEN GUI)
+-- 🔥 OPEN GUI FROM FIRE ICON
 -------------------------------------------------------------
-local iconGui = Instance.new("ScreenGui")
-iconGui.Name = "FireIconGUI"
-iconGui.ResetOnSpawn = false
-iconGui.Parent = player:WaitForChild("PlayerGui")
-
-local fireBtn = Instance.new("TextButton")
-fireBtn.Size = UDim2.new(0, 45, 0, 45)
-fireBtn.Position = UDim2.new(0.05, 0, 0.5, 0)
-fireBtn.BackgroundColor3 = Color3.fromRGB(255, 120, 60)
-fireBtn.Text = "🔥"
-fireBtn.TextScaled = true
-fireBtn.Visible = false
-fireBtn.Active = true
-fireBtn.Draggable = true
-fireBtn.Font = Enum.Font.GothamBold
-fireBtn.TextColor3 = Color3.new(1,1,1)
-fireBtn.Parent = iconGui
-
-local fireCorner = Instance.new("UICorner")
-fireCorner.CornerRadius = UDim.new(0, 12)
-fireCorner.Parent = fireBtn
-
-fireBtn.MouseButton1Click:Connect(function()
-	mainGui.Enabled = true
-	fireBtn.Visible = false
+fireButton.MouseButton1Click:Connect(function()
+	mainGui.Enabled = true    -- show GUI
+	fireButton.Visible = false
 end)
 
 -------------------------------------------------------------
--- BUTTON CLOSE → SHOW FIRE ICON
+-- CLOSE GUI → BACK TO 🔥 ICON
 -------------------------------------------------------------
 button.MouseButton1Click:Connect(function()
 	mainGui.Enabled = false
-	fireBtn.Visible = true
+	fireButton.Visible = true
 end)
