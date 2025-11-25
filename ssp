@@ -318,8 +318,24 @@ bringButton.MouseButton1Click:Connect(function()
                     if obj:IsA("BasePart") and not obj.Anchored and obj.CanCollide then
                         local dist = (obj.Position - hrp.Position).Magnitude
                         if dist <= blackholeRadius then
-                            local direction = (hrp.Position - obj.Position).Unit
-                            obj.Velocity = direction * blackholeForce
+                            -- Remove existing constraints to avoid resistance
+                            for _, c in pairs(obj:GetChildren()) do
+                                if c:IsA("Weld") or c:IsA("Motor6D") or c:IsA("AlignPosition") or c:IsA("AlignOrientation") then
+                                    c:Destroy()
+                                end
+                            end
+
+                            -- Brutal pull force based on distance (closer = stronger)
+                            local forceDir = (hrp.Position - obj.Position).Unit
+                            local forceMag = blackholeForce * (1 + (blackholeRadius - dist)/blackholeRadius)
+                            obj.Velocity = forceDir * forceMag
+
+                            -- Optional chaotic spin
+                            obj.RotVelocity = Vector3.new(
+                                math.random(-5,5),
+                                math.random(-5,5),
+                                math.random(-5,5)
+                            )
                         end
                     end
                 end
