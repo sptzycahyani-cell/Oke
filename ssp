@@ -1,6 +1,6 @@
 --====================================================
 -- Script by Xraxor (Cleaned, Optimized by ChatGPT)
--- + Added Clone Feature
+-- With Morph Clone Feature (No floating bug)
 --====================================================
 
 local TweenService = game:GetService("TweenService")
@@ -130,7 +130,7 @@ flagButton.MouseButton1Click:Connect(function()
 end)
 
 -- ============================
--- TELEPORT & CLONE PLAYER FEATURE
+-- TELEPORT & MORPH CLONE FEATURE
 -- ============================
 local function createPlayerItem(plr)
     local item = Instance.new("Frame")
@@ -160,7 +160,7 @@ local function createPlayerItem(plr)
     nameLabel.TextXAlignment = Enum.TextXAlignment.Left
     nameLabel.Parent = item
 
-    -- TP BUTTON
+    -- ============== TP BUTTON ==================
     local tpBtn = Instance.new("TextButton")
     tpBtn.Size = UDim2.new(0, 50, 0, 25)
     tpBtn.Position = UDim2.new(1, -110, 0.5, -12)
@@ -182,7 +182,7 @@ local function createPlayerItem(plr)
         end
     end)
 
-    -- CLONE BUTTON
+    -- ============== CLONE (MORPH) BUTTON ==================
     local cloneBtn = Instance.new("TextButton")
     cloneBtn.Size = UDim2.new(0, 50, 0, 25)
     cloneBtn.Position = UDim2.new(1, -50, 0.5, -12)
@@ -197,12 +197,15 @@ local function createPlayerItem(plr)
     cloneCorner.Parent = cloneBtn
 
     cloneBtn.MouseButton1Click:Connect(function()
+        local myChar = player.Character
         local targetChar = plr.Character
-        if targetChar then
-            local clone = targetChar:Clone()
-            clone.Parent = workspace
-            if clone:FindFirstChild("HumanoidRootPart") then
-                clone:SetPrimaryPartCFrame(player.Character.HumanoidRootPart.CFrame + Vector3.new(5,0,0))
+        if myChar and targetChar then
+            local myHum = myChar:FindFirstChildOfClass("Humanoid")
+            local targetHum = targetChar:FindFirstChildOfClass("Humanoid")
+
+            if myHum and targetHum then
+                local desc = targetHum:GetAppliedDescription()
+                myHum:ApplyDescription(desc)
             end
         end
     end)
