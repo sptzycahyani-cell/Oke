@@ -1,5 +1,6 @@
 --====================================================
 -- Script by Xraxor (Final Cleaned + Morph V3 by ChatGPT)
+-- Tambahan Fitur Fly oleh Gemini
 --====================================================
 
 local TweenService = game:GetService("TweenService")
@@ -8,17 +9,109 @@ local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
 -- =======================================
--- GLOBAL FOR SPECTATE + MORPH
+-- GLOBAL FOR SPECTATE + MORPH + FLY
 -- =======================================
 local spectating = false
 local spectateTarget = nil
+local flying = false
+local flySpeed = 50 -- Kecepatan terbang dasar
 
 local originalDescription = nil
 local originalAnimate = nil
 
+local flyBtn -- Deklarasi variabel tombol Fly di awal
+
+-- Fungsi untuk menghentikan Fly (akan digunakan di stopSpectate)
+local function stopFly()
+    flying = false
+    
+    local char = player.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.PlatformStand = false
+            -- Kembalikan CameraSubject ke Humanoid jika tidak spectating
+            if not spectating then
+                camera.CameraSubject = hum
+            end
+        end
+        if char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart:FindFirstChild("FlyVelocity") then
+            char.HumanoidRootPart.FlyVelocity:Destroy()
+        end
+    end
+    
+    if flyBtn then
+        flyBtn.Text = "FLY (OFF)"
+        flyBtn.BackgroundColor3 = Color3.fromRGB(0,150,150)
+    end
+end
+
+local function startFly()
+    local char = player.Character
+    if not char then return end
+
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not (hum and root) then return end
+    
+    -- Hentikan spectate jika sedang aktif
+    if spectating then stopSpectate() end
+
+    flying = true
+    hum.PlatformStand = true
+    camera.CameraSubject = root -- Kamera mengikuti HumanoidRootPart
+
+    local velocity = Instance.new("BodyVelocity")
+    velocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    velocity.P = 1250
+    velocity.Name = "FlyVelocity"
+    velocity.Parent = root
+    
+    task.spawn(function()
+        while flying and char.Parent do
+            task.wait()
+            
+            local camCF = camera.CFrame
+            local moveVector = Vector3.new()
+            local currentSpeed = flySpeed
+            
+            local moveDir = player:GetMoveDirection()
+            local relativeMoveDir = camCF:VectorToObjectSpace(moveDir)
+            
+            -- Gerakan Maju/Mundur (W/S) dan Kiri/Kanan (A/D)
+            moveVector += camCF.LookVector * relativeMoveDir.Z 
+            moveVector += camCF.RightVector * relativeMoveDir.X
+            
+            -- Naik (Space) - Menggunakan kontrol Jump
+            if player:GetControls().MoveState == Enum.ComputerMoveState.Jump then
+                moveVector += Vector3.new(0, 1, 0)
+            end
+            
+            -- Gerakan cepat (Shift) - Menggunakan kontrol Sprint
+            if player:GetControls().MoveState == Enum.ComputerMoveState.Sprint then
+                currentSpeed = flySpeed * 2 
+            end
+            
+            if moveVector.Magnitude > 0 then
+                velocity.Velocity = moveVector.Unit * currentSpeed
+            else
+                velocity.Velocity = Vector3.new(0,0,0)
+            end
+        end
+        
+        -- Hapus BodyVelocity jika loop selesai
+        if root and root:FindFirstChild("FlyVelocity") then
+            root.FlyVelocity:Destroy()
+        end
+    end)
+end
+
 local function stopSpectate()
     spectating = false
     spectateTarget = nil
+    
+    -- Pastikan fly juga mati saat berhenti spectate
+    if flying then stopFly() end 
 
     if player.Character then
         local hum = player.Character:FindFirstChildOfClass("Humanoid")
@@ -256,6 +349,7 @@ local function createPlayerItem(plr)
     Instance.new("UICorner", viewBtn)
 
     viewBtn.MouseButton1Click:Connect(function()
+        if flying then stopFly() end -- Hentikan Fly saat View
         spectating = true
         spectateTarget = plr
     end)
@@ -312,6 +406,33 @@ Players.PlayerRemoving:Connect(function(plr)
 end)
 
 -- =======================================
+-- FLY FEATURE BUTTON
+-- =======================================
+flyBtn = Instance.new("TextButton")
+flyBtn.Size = UDim2.new(0,160,0,35)
+flyBtn.Position = UDim2.new(0.5,-80,0.70,-50) -- Diposisikan sebelum STOP VIEW
+flyBtn.BackgroundColor3 = Color3.fromRGB(0,150,150)
+flyBtn.Text = "FLY (OFF)"
+flyBtn.TextColor3 = Color3.new(1,1,1)
+flyBtn.Font = Enum.Font.GothamBold
+flyBtn.TextSize = 14
+flyBtn.Parent = frame
+Instance.new("UICorner", flyBtn)
+
+flyBtn.MouseButton1Click:Connect(function()
+    if not flying then
+        startFly()
+        flyBtn.Text = "FLY (ON)"
+        flyBtn.BackgroundColor3 = Color3.fromRGB(150,0,0)
+    else
+        stopFly()
+        flyBtn.Text = "FLY (OFF)"
+        flyBtn.BackgroundColor3 = Color3.fromRGB(0,150,150)
+    end
+end)
+
+
+-- =======================================
 -- STOP VIEW BUTTON
 -- =======================================
 local stopBtn = Instance.new("TextButton")
@@ -352,5 +473,6 @@ end)
 -- =======================================
 closeBtn.MouseButton1Click:Connect(function()
     stopSpectate()
+    stopFly() -- Pastikan fly juga dihentikan saat GUI ditutup
     gui:Destroy()
 end)
