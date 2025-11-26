@@ -1,8 +1,9 @@
 --==========================================
--- Mount Atin V3 - Stable Version
+-- Mount Atin V3 - Stable Full Version
 --==========================================
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
@@ -17,8 +18,10 @@ local spectateTarget = nil
 local originalDescription = nil
 local originalAnimate = nil
 
+local flyBtn
+
 -- =======================
--- FUNCTIONS
+-- FLY FUNCTIONS
 -- =======================
 local function stopFly()
     flying = false
@@ -26,13 +29,18 @@ local function stopFly()
     if char then
         local hum = char:FindFirstChildOfClass("Humanoid")
         if hum then hum.PlatformStand = false end
-        if char:FindFirstChild("HumanoidRootPart") then
-            local f = char.HumanoidRootPart:FindFirstChild("FlyVelocity")
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if root then
+            local f = root:FindFirstChild("FlyVelocity")
             if f then f:Destroy() end
         end
         if not spectating and hum then
             camera.CameraSubject = hum
         end
+    end
+    if flyBtn then
+        flyBtn.Text = "FLY (OFF)"
+        flyBtn.BackgroundColor3 = Color3.fromRGB(0,150,150)
     end
 end
 
@@ -50,7 +58,7 @@ local function startFly()
     camera.CameraSubject = root
 
     local velocity = Instance.new("BodyVelocity")
-    velocity.MaxForce = Vector3.new(1e5,1e5,1e5)
+    velocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
     velocity.P = 1250
     velocity.Name = "FlyVelocity"
     velocity.Parent = root
@@ -58,29 +66,16 @@ local function startFly()
     task.spawn(function()
         while flying and char.Parent do
             task.wait()
-            local moveVector = Vector3.new()
-            local controls = player:GetMouse()
-            local camCF = camera.CFrame
             local direction = Vector3.new()
-            -- Simple WASD movement
-            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.W) then
-                direction = direction + camCF.LookVector
-            end
-            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.S) then
-                direction = direction - camCF.LookVector
-            end
-            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.A) then
-                direction = direction - camCF.RightVector
-            end
-            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.D) then
-                direction = direction + camCF.RightVector
-            end
-            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Space) then
-                direction = direction + Vector3.new(0,1,0)
-            end
-            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.LeftShift) then
-                direction = direction - Vector3.new(0,1,0)
-            end
+            local camCF = camera.CFrame
+
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction += camCF.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction -= camCF.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction -= camCF.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction += camCF.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction += Vector3.new(0,1,0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then direction -= Vector3.new(0,1,0) end
+
             if direction.Magnitude > 0 then
                 velocity.Velocity = direction.Unit * flySpeed
             else
@@ -91,6 +86,9 @@ local function startFly()
     end)
 end
 
+-- =======================
+-- SPECTATE FUNCTIONS
+-- =======================
 local function stopSpectate()
     spectating = false
     spectateTarget = nil
@@ -111,6 +109,9 @@ task.spawn(function()
     end
 end)
 
+-- =======================
+-- MORPH FUNCTIONS
+-- =======================
 local function fullClone(targetPlr)
     local myChar = player.Character
     local tChar = targetPlr.Character
@@ -125,15 +126,13 @@ local function fullClone(targetPlr)
         if anim then originalAnimate = anim:Clone() end
     end
 
-    -- Destroy existing accessories & clothes
     for _,v in ipairs(myChar:GetChildren()) do
         if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") then
             v:Destroy()
         end
     end
 
-    local desc = tHum:GetAppliedDescription()
-    myHum:ApplyDescription(desc)
+    myHum:ApplyDescription(tHum:GetAppliedDescription())
 
     local oldAnim = myChar:FindFirstChild("Animate")
     if oldAnim then oldAnim:Destroy() end
@@ -162,7 +161,7 @@ local function revertMorph()
 end
 
 -- =======================
--- GUI
+-- GUI SETUP
 -- =======================
 local gui = Instance.new("ScreenGui")
 gui.Name = "MountAtinV3"
@@ -170,7 +169,7 @@ gui.ResetOnSpawn = false
 gui.Parent = player.PlayerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0,260,0,380)
+frame.Size = UDim2.new(0,260,0,400)
 frame.Position = UDim2.new(0.5,-130,0.3,0)
 frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 frame.Active = true
@@ -187,10 +186,10 @@ title.TextSize = 16
 title.Text = "Mount Atin V3"
 title.Parent = frame
 
--- Info player di atas Summit
+-- Info player di atas tombol Summit
 local infoFrame = Instance.new("Frame")
 infoFrame.Size = UDim2.new(0,180,0,60)
-infoFrame.Position = UDim2.new(0.5,-90,0.5,-40)
+infoFrame.Position = UDim2.new(0.5,-90,0.55,-30)
 infoFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
 infoFrame.Parent = frame
 Instance.new("UICorner", infoFrame)
@@ -224,10 +223,10 @@ usernameLabel.Text = "@"..player.DisplayName
 usernameLabel.TextXAlignment = Enum.TextXAlignment.Left
 usernameLabel.Parent = infoFrame
 
--- Tombol Summit / Close GUI
+-- SUMMIT / CLOSE BUTTON
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0,160,0,40)
-closeBtn.Position = UDim2.new(0.5,-80,0.65,0)
+closeBtn.Position = UDim2.new(0.5,-80,0.70,0)
 closeBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
 closeBtn.Text = "SUMMIT"
 closeBtn.TextColor3 = Color3.new(1,1,1)
@@ -241,3 +240,181 @@ closeBtn.MouseButton1Click:Connect(function()
     stopFly()
     gui:Destroy()
 end)
+
+-- =======================
+-- PLAYER LIST PANEL
+-- =======================
+local openListBtn = Instance.new("ImageButton")
+openListBtn.Size = UDim2.new(0,25,0,25)
+openListBtn.Position = UDim2.new(1,-35,0,5)
+openListBtn.Image = "rbxassetid://6031097229"
+openListBtn.BackgroundTransparency = 1
+openListBtn.Parent = frame
+
+local sideFrame = Instance.new("Frame")
+sideFrame.Size = UDim2.new(0,200,0,260)
+sideFrame.Position = UDim2.new(1,10,0,0)
+sideFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+sideFrame.Visible = false
+sideFrame.Parent = frame
+Instance.new("UICorner", sideFrame)
+
+local scroll = Instance.new("ScrollingFrame")
+scroll.Size = UDim2.new(1,0,1,-5)
+scroll.Position = UDim2.new(0,0,0,5)
+scroll.CanvasSize = UDim2.new(0,0,0,0)
+scroll.ScrollBarThickness = 6
+scroll.BackgroundTransparency = 1
+scroll.Parent = sideFrame
+
+local layout = Instance.new("UIListLayout")
+layout.Parent = scroll
+layout.Padding = UDim.new(0,5)
+layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    scroll.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 10)
+end)
+
+openListBtn.MouseButton1Click:Connect(function()
+    sideFrame.Visible = not sideFrame.Visible
+end)
+
+-- =======================
+-- CREATE PLAYER ITEM
+-- =======================
+local function createPlayerItem(plr)
+    local item = Instance.new("Frame")
+    item.Size = UDim2.new(1,-10,0,70)
+    item.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    item.Parent = scroll
+    Instance.new("UICorner", item)
+
+    local img = Instance.new("ImageLabel")
+    img.Size = UDim2.new(0,45,0,45)
+    img.Position = UDim2.new(0,5,0.5,-22)
+    img.BackgroundTransparency = 1
+    img.Image = "rbxthumb://type=AvatarHeadShot&id="..plr.UserId.."&w=150&h=150"
+    img.Parent = item
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Size = UDim2.new(1,-150,1,0)
+    nameLabel.Position = UDim2.new(0,55,0,0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = plr.Name
+    nameLabel.TextColor3 = Color3.new(1,1,1)
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextSize = 14
+    nameLabel.Parent = item
+
+    -- VIEW BTN
+    local viewBtn = Instance.new("TextButton")
+    viewBtn.Size = UDim2.new(0,50,0,25)
+    viewBtn.Position = UDim2.new(1,-150,0.5,-12)
+    viewBtn.BackgroundColor3 = Color3.fromRGB(255,200,60)
+    viewBtn.Text = "View"
+    viewBtn.TextColor3 = Color3.new(1,1,1)
+    viewBtn.Parent = item
+    Instance.new("UICorner", viewBtn)
+
+    viewBtn.MouseButton1Click:Connect(function()
+        if flying then stopFly() end
+        spectating = true
+        spectateTarget = plr
+    end)
+
+    -- TP BTN
+    local tpBtn = Instance.new("TextButton")
+    tpBtn.Size = UDim2.new(0,50,0,25)
+    tpBtn.Position = UDim2.new(1,-95,0.5,-12)
+    tpBtn.BackgroundColor3 = Color3.fromRGB(60,120,255)
+    tpBtn.Text = "TP"
+    tpBtn.TextColor3 = Color3.new(1,1,1)
+    tpBtn.Parent = item
+    Instance.new("UICorner", tpBtn)
+
+    tpBtn.MouseButton1Click:Connect(function()
+        local myChar = player.Character
+        local tg = plr.Character
+        if myChar and tg and myChar:FindFirstChild("HumanoidRootPart") and tg:FindFirstChild("HumanoidRootPart") then
+            myChar.HumanoidRootPart.CFrame = tg.HumanoidRootPart.CFrame + Vector3.new(0,2,0)
+        end
+    end)
+
+    -- CLONE BTN
+    local cloneBtn = Instance.new("TextButton")
+    cloneBtn.Size = UDim2.new(0,50,0,25)
+    cloneBtn.Position = UDim2.new(1,-40,0.5,-12)
+    cloneBtn.BackgroundColor3 = Color3.fromRGB(255,120,60)
+    cloneBtn.Text = "Clone"
+    cloneBtn.TextColor3 = Color3.new(1,1,1)
+    cloneBtn.Parent = item
+    Instance.new("UICorner", cloneBtn)
+
+    cloneBtn.MouseButton1Click:Connect(function()
+        fullClone(plr)
+    end)
+end
+
+for _,plr in ipairs(Players:GetPlayers()) do
+    if plr ~= player then createPlayerItem(plr) end
+end
+Players.PlayerAdded:Connect(function(plr)
+    if plr ~= player then createPlayerItem(plr) end
+end)
+Players.PlayerRemoving:Connect(function(plr)
+    for _,v in pairs(scroll:GetChildren()) do
+        if v:IsA("Frame") then
+            local t = v:FindFirstChildWhichIsA("TextLabel")
+            if t and t.Text == plr.Name then v:Destroy() end
+        end
+    end
+end)
+
+-- =======================
+-- FLY BUTTON
+-- =======================
+flyBtn = Instance.new("TextButton")
+flyBtn.Size = UDim2.new(0,160,0,35)
+flyBtn.Position = UDim2.new(0.5,-80,0.78,0)
+flyBtn.BackgroundColor3 = Color3.fromRGB(0,150,150)
+flyBtn.Text = "FLY (OFF)"
+flyBtn.TextColor3 = Color3.new(1,1,1)
+flyBtn.Font = Enum.Font.GothamBold
+flyBtn.TextSize = 14
+flyBtn.Parent = frame
+Instance.new("UICorner", flyBtn)
+
+flyBtn.MouseButton1Click:Connect(function()
+    if not flying then startFly() else stopFly() end
+end)
+
+-- =======================
+-- STOP VIEW BUTTON
+-- =======================
+local stopBtn = Instance.new("TextButton")
+stopBtn.Size = UDim2.new(0,160,0,35)
+stopBtn.Position = UDim2.new(0.5,-80,0.87,0)
+stopBtn.BackgroundColor3 = Color3.fromRGB(120,120,50)
+stopBtn.Text = "STOP VIEW"
+stopBtn.TextColor3 = Color3.new(1,1,1)
+stopBtn.Font = Enum.Font.GothamBold
+stopBtn.TextSize = 14
+stopBtn.Parent = frame
+Instance.new("UICorner", stopBtn)
+
+stopBtn.MouseButton1Click:Connect(stopSpectate)
+
+-- =======================
+-- REVERT MORPH BUTTON
+-- =======================
+local revertBtn = Instance.new("TextButton")
+revertBtn.Size = UDim2.new(0,160,0,35)
+revertBtn.Position = UDim2.new(0.5,-80,0.95,0)
+revertBtn.BackgroundColor3 = Color3.fromRGB(90,40,40)
+revertBtn.Text = "REVERT MORPH"
+revertBtn.TextColor3 = Color3.new(1,1,1)
+revertBtn.Font = Enum.Font.GothamBold
+revertBtn.TextSize = 14
+revertBtn.Parent = frame
+Instance.new("UICorner", revertBtn)
+
+revertBtn.MouseButton1Click:Connect(revertMorph)
