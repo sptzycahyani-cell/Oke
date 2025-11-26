@@ -1,14 +1,21 @@
 --====================================================
 -- Script by Xraxor (Cleaned, Optimized by ChatGPT)
--- With Morph Clone Feature (No floating bug)
+-- Added Features: Morph Clone + View Player
 --====================================================
 
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
 
 -- ============================
--- INTRO ANIMATION "BY : Xraxor"
+-- GLOBAL FOR SPECTATE
+-- ============================
+local spectating = false
+local spectateTarget = nil
+
+-- ============================
+-- INTRO ANIMATION
 -- ============================
 do
     local introGui = Instance.new("ScreenGui")
@@ -41,7 +48,7 @@ do
 end
 
 -- ============================
--- GUI UTAMA
+-- GUI MAIN
 -- ============================
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "MainGUI"
@@ -49,80 +56,71 @@ screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 250, 0, 250)
-frame.Position = UDim2.new(0.4, -125, 0.5, -100)
-frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-frame.BorderSizePixel = 0
+frame.Size = UDim2.new(0, 260, 0, 290)
+frame.Position = UDim2.new(0.4, -130, 0.45, -130)
+frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 frame.Active = true
 frame.Draggable = true
 frame.Parent = screenGui
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 15)
-corner.Parent = frame
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0,15)
 
--- TITLE
+-- Title
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 30)
+title.Size = UDim2.new(1,0,0,35)
 title.BackgroundTransparency = 1
 title.Text = "Mount Atin V2"
-title.TextColor3 = Color3.new(1, 1, 1)
+title.TextColor3 = Color3.new(1,1,1)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 16
 title.Parent = frame
 
--- BUTTON CLOSE GUI
+-- Summit (close)
 local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 160, 0, 40)
-closeBtn.Position = UDim2.new(0.5, -80, 0.5, -50)
-closeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+closeBtn.Size = UDim2.new(0,160,0,40)
+closeBtn.Position = UDim2.new(0.5,-80,0.65,-50)
+closeBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
 closeBtn.Text = "SUMMIT"
-closeBtn.TextColor3 = Color3.new(1, 1, 1)
+closeBtn.TextColor3 = Color3.new(1,1,1)
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.TextSize = 15
 closeBtn.Parent = frame
-
-local closeBtnCorner = Instance.new("UICorner")
-closeBtnCorner.CornerRadius = UDim.new(0, 10)
-closeBtnCorner.Parent = closeBtn
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0,10)
 
 -- ============================
 -- PLAYER LIST BUTTON
 -- ============================
 local flagButton = Instance.new("ImageButton")
-flagButton.Size = UDim2.new(0, 25, 0, 25)
-flagButton.Position = UDim2.new(1, -35, 0, 5)
+flagButton.Size = UDim2.new(0,25,0,25)
+flagButton.Position = UDim2.new(1,-35,0,5)
 flagButton.BackgroundTransparency = 1
 flagButton.Image = "rbxassetid://6031097229"
 flagButton.Parent = frame
 
--- PLAYER LIST PANEL
+-- Sidebar
 local sideFrame = Instance.new("Frame")
-sideFrame.Size = UDim2.new(0, 200, 0, 240)
-sideFrame.Position = UDim2.new(1, 10, 0, 0)
-sideFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+sideFrame.Size = UDim2.new(0,200,0,250)
+sideFrame.Position = UDim2.new(1,10,0,0)
+sideFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
 sideFrame.Visible = false
 sideFrame.Parent = frame
-
-local sideCorner = Instance.new("UICorner")
-sideCorner.CornerRadius = UDim.new(0, 12)
-sideCorner.Parent = sideFrame
+Instance.new("UICorner", sideFrame).CornerRadius = UDim.new(0,12)
 
 local scrollFrame = Instance.new("ScrollingFrame")
-scrollFrame.Size = UDim2.new(1, 0, 1, -5)
-scrollFrame.Position = UDim2.new(0, 0, 0, 5)
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollFrame.Size = UDim2.new(1,0,1,-5)
+scrollFrame.Position = UDim2.new(0,0,0,5)
+scrollFrame.CanvasSize = UDim2.new(0,0,0,0)
 scrollFrame.ScrollBarThickness = 6
 scrollFrame.BackgroundTransparency = 1
 scrollFrame.Parent = sideFrame
 
 local listLayout = Instance.new("UIListLayout")
-listLayout.Padding = UDim.new(0, 5)
-listLayout.SortOrder = Enum.SortOrder.LayoutOrder
 listLayout.Parent = scrollFrame
+listLayout.Padding = UDim.new(0,5)
+listLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 10)
+    scrollFrame.CanvasSize = UDim2.new(0,0,0,listLayout.AbsoluteContentSize.Y + 10)
 end)
 
 flagButton.MouseButton1Click:Connect(function()
@@ -130,71 +128,104 @@ flagButton.MouseButton1Click:Connect(function()
 end)
 
 -- ============================
--- TELEPORT & MORPH CLONE FEATURE
+-- SPECTATE FUNCTIONS
+-- ============================
+local function stopSpectate()
+    spectating = false
+    spectateTarget = nil
+    camera.CameraSubject = player.Character:FindFirstChildOfClass("Humanoid")
+end
+
+spawn(function()
+    while true do
+        task.wait()
+        if spectating and spectateTarget and spectateTarget.Character then
+            local hum = spectateTarget.Character:FindFirstChildOfClass("Humanoid")
+            if hum then
+                camera.CameraSubject = hum
+            end
+        end
+    end
+end)
+
+-- ============================
+-- PLAYER ITEM TEMPLATE
 -- ============================
 local function createPlayerItem(plr)
     local item = Instance.new("Frame")
-    item.Size = UDim2.new(1, -10, 0, 60)
-    item.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    item.Size = UDim2.new(1,-10,0,70)
+    item.BackgroundColor3 = Color3.fromRGB(35,35,35)
     item.Parent = scrollFrame
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
-    corner.Parent = item
+    Instance.new("UICorner", item).CornerRadius = UDim.new(0,10)
 
     local img = Instance.new("ImageLabel")
-    img.Size = UDim2.new(0, 40, 0, 40)
-    img.Position = UDim2.new(0, 5, 0.5, -20)
+    img.Size = UDim2.new(0,45,0,45)
+    img.Position = UDim2.new(0,5,0.5,-22)
     img.BackgroundTransparency = 1
-    img.Image = "rbxthumb://type=AvatarHeadShot&id=" .. plr.UserId .. "&w=150&h=150"
+    img.Image = "rbxthumb://type=AvatarHeadShot&id="..plr.UserId.."&w=150&h=150"
     img.Parent = item
 
     local nameLabel = Instance.new("TextLabel")
-    nameLabel.Size = UDim2.new(1, -130, 1, 0)
-    nameLabel.Position = UDim2.new(0, 50, 0, 0)
+    nameLabel.Size = UDim2.new(1,-150,1,0)
+    nameLabel.Position = UDim2.new(0,55,0,0)
     nameLabel.BackgroundTransparency = 1
     nameLabel.Text = plr.Name
-    nameLabel.TextColor3 = Color3.new(1, 1, 1)
+    nameLabel.TextColor3 = Color3.new(1,1,1)
     nameLabel.Font = Enum.Font.GothamBold
     nameLabel.TextSize = 14
     nameLabel.TextXAlignment = Enum.TextXAlignment.Left
     nameLabel.Parent = item
 
-    -- ============== TP BUTTON ==================
+    -- ============ VIEW
+    local viewBtn = Instance.new("TextButton")
+    viewBtn.Size = UDim2.new(0,50,0,25)
+    viewBtn.Position = UDim2.new(1,-150,0.5,-12)
+    viewBtn.BackgroundColor3 = Color3.fromRGB(255,200,60)
+    viewBtn.Text = "View"
+    viewBtn.TextColor3 = Color3.new(1,1,1)
+    viewBtn.Font = Enum.Font.GothamBold
+    viewBtn.TextSize = 14
+    viewBtn.Parent = item
+    Instance.new("UICorner", viewBtn)
+
+    viewBtn.MouseButton1Click:Connect(function()
+        if plr.Character then
+            spectating = true
+            spectateTarget = plr
+        end
+    end)
+
+    -- ============ TP
     local tpBtn = Instance.new("TextButton")
-    tpBtn.Size = UDim2.new(0, 50, 0, 25)
-    tpBtn.Position = UDim2.new(1, -110, 0.5, -12)
-    tpBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 255)
+    tpBtn.Size = UDim2.new(0,50,0,25)
+    tpBtn.Position = UDim2.new(1,-95,0.5,-12)
+    tpBtn.BackgroundColor3 = Color3.fromRGB(60,120,255)
     tpBtn.Text = "TP"
     tpBtn.TextColor3 = Color3.new(1,1,1)
     tpBtn.Font = Enum.Font.GothamBold
     tpBtn.TextSize = 14
     tpBtn.Parent = item
-
-    local tpCorner = Instance.new("UICorner")
-    tpCorner.Parent = tpBtn
+    Instance.new("UICorner", tpBtn)
 
     tpBtn.MouseButton1Click:Connect(function()
-        local myChar = player.Character
-        local targetChar = plr.Character
-        if myChar and targetChar and myChar:FindFirstChild("HumanoidRootPart") and targetChar:FindFirstChild("HumanoidRootPart") then
-            myChar.HumanoidRootPart.CFrame = targetChar.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
+        local my = player.Character
+        local tg = plr.Character
+        if my and tg and my:FindFirstChild("HumanoidRootPart") and tg:FindFirstChild("HumanoidRootPart") then
+            my.HumanoidRootPart.CFrame = tg.HumanoidRootPart.CFrame + Vector3.new(0,2,0)
         end
     end)
 
-    -- ============== CLONE (MORPH) BUTTON ==================
+    -- ============ CLONE (Morph)
     local cloneBtn = Instance.new("TextButton")
-    cloneBtn.Size = UDim2.new(0, 50, 0, 25)
-    cloneBtn.Position = UDim2.new(1, -50, 0.5, -12)
-    cloneBtn.BackgroundColor3 = Color3.fromRGB(255, 120, 60)
+    cloneBtn.Size = UDim2.new(0,50,0,25)
+    cloneBtn.Position = UDim2.new(1,-40,0.5,-12)
+    cloneBtn.BackgroundColor3 = Color3.fromRGB(255,120,60)
     cloneBtn.Text = "Clone"
     cloneBtn.TextColor3 = Color3.new(1,1,1)
     cloneBtn.Font = Enum.Font.GothamBold
     cloneBtn.TextSize = 14
     cloneBtn.Parent = item
-
-    local cloneCorner = Instance.new("UICorner")
-    cloneCorner.Parent = cloneBtn
+    Instance.new("UICorner", cloneBtn)
 
     cloneBtn.MouseButton1Click:Connect(function()
         local myChar = player.Character
@@ -202,7 +233,6 @@ local function createPlayerItem(plr)
         if myChar and targetChar then
             local myHum = myChar:FindFirstChildOfClass("Humanoid")
             local targetHum = targetChar:FindFirstChildOfClass("Humanoid")
-
             if myHum and targetHum then
                 local desc = targetHum:GetAppliedDescription()
                 myHum:ApplyDescription(desc)
@@ -221,19 +251,32 @@ Players.PlayerAdded:Connect(function(plr)
 end)
 
 Players.PlayerRemoving:Connect(function(plr)
-    for _, v in pairs(scrollFrame:GetChildren()) do
+    for _,v in pairs(scrollFrame:GetChildren()) do
         if v:IsA("Frame") then
-            local txt = v:FindFirstChildWhichIsA("TextLabel")
-            if txt and txt.Text == plr.Name then
-                v:Destroy()
-            end
+            local lbl = v:FindFirstChildWhichIsA("TextLabel")
+            if lbl and lbl.Text == plr.Name then v:Destroy() end
         end
     end
 end)
 
--- ============================
--- CLOSE GUI BUTTON
--- ============================
+-- STOP VIEW BUTTON
+local unviewBtn = Instance.new("TextButton")
+unviewBtn.Size = UDim2.new(0,160,0,35)
+unviewBtn.Position = UDim2.new(0.5,-80,0.7,0)
+unviewBtn.BackgroundColor3 = Color3.fromRGB(120,120,50)
+unviewBtn.Text = "STOP VIEW"
+unviewBtn.TextColor3 = Color3.new(1,1,1)
+unviewBtn.Font = Enum.Font.GothamBold
+unviewBtn.TextSize = 14
+unviewBtn.Parent = frame
+Instance.new("UICorner", unviewBtn).CornerRadius = UDim.new(0,10)
+
+unviewBtn.MouseButton1Click:Connect(function()
+    stopSpectate()
+end)
+
+-- CLOSE GUI
 closeBtn.MouseButton1Click:Connect(function()
+    stopSpectate()
     screenGui:Destroy()
 end)
