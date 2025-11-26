@@ -1,6 +1,5 @@
 --====================================================
--- Script by Xraxor (Final Cleaned by ChatGPT)
--- Features: TP | FULL Clone | Full Animation | Spectate
+-- Script by Xraxor (Final Cleaned + Morph V3 by ChatGPT)
 --====================================================
 
 local TweenService = game:GetService("TweenService")
@@ -9,10 +8,13 @@ local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
 -- =======================================
--- GLOBAL FOR SPECTATE
+-- GLOBAL FOR SPECTATE + MORPH
 -- =======================================
 local spectating = false
 local spectateTarget = nil
+
+local originalDescription = nil
+local originalAnimate = nil
 
 local function stopSpectate()
     spectating = false
@@ -26,7 +28,7 @@ local function stopSpectate()
     end
 end
 
-spawn(function()
+task.spawn(function()
     while task.wait() do
         if spectating and spectateTarget and spectateTarget.Character then
             local hum = spectateTarget.Character:FindFirstChildOfClass("Humanoid")
@@ -38,12 +40,11 @@ spawn(function()
 end)
 
 -- =======================================
--- INTRO ANIMATION
+-- INTRO
 -- =======================================
 do
     local introGui = Instance.new("ScreenGui")
     introGui.Name = "IntroAnimation"
-    introGui.ResetOnSpawn = false
     introGui.Parent = player:WaitForChild("PlayerGui")
 
     local introLabel = Instance.new("TextLabel")
@@ -51,9 +52,9 @@ do
     introLabel.Position = UDim2.new(0.5, -150, 0.4, 0)
     introLabel.BackgroundTransparency = 1
     introLabel.Text = "By : Xraxor"
-    introLabel.TextColor3 = Color3.fromRGB(40, 40, 40)
-    introLabel.TextScaled = true
+    introLabel.TextColor3 = Color3.fromRGB(40,40,40)
     introLabel.Font = Enum.Font.GothamBold
+    introLabel.TextScaled = true
     introLabel.Parent = introGui
 
     TweenService:Create(introLabel, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
@@ -63,23 +64,23 @@ do
         {TextColor3 = Color3.fromRGB(0,0,0)}):Play()
 
     task.wait(2)
-    local fadeOut = TweenService:Create(introLabel, TweenInfo.new(0.5), {TextTransparency = 1})
-    fadeOut:Play()
-    fadeOut.Completed:Connect(function()
+    local fade = TweenService:Create(introLabel, TweenInfo.new(0.4), {TextTransparency = 1})
+    fade:Play()
+    fade.Completed:Connect(function()
         introGui:Destroy()
     end)
 end
 
 -- =======================================
--- GUI MAIN
+-- MAIN GUI
 -- =======================================
 local gui = Instance.new("ScreenGui")
 gui.Name = "MainGUI"
 gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
+gui.Parent = player.PlayerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 260, 0, 290)
+frame.Size = UDim2.new(0, 260, 0, 320)
 frame.Position = UDim2.new(0.4, -130,0.45,-130)
 frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 frame.Active = true
@@ -89,14 +90,15 @@ frame.Parent = gui
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0,15)
 
 local title = Instance.new("TextLabel")
+title.Text = "Mount Atin V3"
 title.Size = UDim2.new(1,0,0,35)
 title.BackgroundTransparency = 1
-title.Text = "Mount Atin V2"
 title.TextColor3 = Color3.new(1,1,1)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 16
 title.Parent = frame
 
+-- SUMMIT / CLOSE
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0,160,0,40)
 closeBtn.Position = UDim2.new(0.5,-80,0.65,-50)
@@ -106,25 +108,25 @@ closeBtn.TextColor3 = Color3.new(1,1,1)
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.TextSize = 15
 closeBtn.Parent = frame
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0,10)
+Instance.new("UICorner", closeBtn)
 
 -- =======================================
--- PLAYER LIST BUTTON
+-- PLAYER LIST PANEL
 -- =======================================
 local openListBtn = Instance.new("ImageButton")
 openListBtn.Size = UDim2.new(0,25,0,25)
 openListBtn.Position = UDim2.new(1,-35,0,5)
-openListBtn.BackgroundTransparency = 1
 openListBtn.Image = "rbxassetid://6031097229"
+openListBtn.BackgroundTransparency = 1
 openListBtn.Parent = frame
 
 local sideFrame = Instance.new("Frame")
-sideFrame.Size = UDim2.new(0,200,0,250)
+sideFrame.Size = UDim2.new(0,200,0,260)
 sideFrame.Position = UDim2.new(1,10,0,0)
 sideFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
 sideFrame.Visible = false
 sideFrame.Parent = frame
-Instance.new("UICorner", sideFrame).CornerRadius = UDim.new(0,12)
+Instance.new("UICorner", sideFrame)
 
 local scroll = Instance.new("ScrollingFrame")
 scroll.Size = UDim2.new(1,0,1,-5)
@@ -137,7 +139,6 @@ scroll.Parent = sideFrame
 local layout = Instance.new("UIListLayout")
 layout.Parent = scroll
 layout.Padding = UDim.new(0,5)
-layout.SortOrder = Enum.SortOrder.LayoutOrder
 
 layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     scroll.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 10)
@@ -148,7 +149,7 @@ openListBtn.MouseButton1Click:Connect(function()
 end)
 
 -- =======================================
--- FULL CLONE FUNCTION
+-- FULL CLONE (FINAL VERSION)
 -- =======================================
 local function fullClone(targetPlr)
     local myChar = player.Character
@@ -159,23 +160,62 @@ local function fullClone(targetPlr)
     local tHum = tChar:FindFirstChildOfClass("Humanoid")
     if not (myHum and tHum) then return end
 
-    -- Full morph (skin, clothing, body, accessories)
+    -- Save original (ONE TIME ONLY)
+    if not originalDescription then
+        originalDescription = myHum:GetAppliedDescription()
+        local anim = myChar:FindFirstChild("Animate")
+        if anim then
+            originalAnimate = anim:Clone()
+        end
+    end
+
+    -- Remove accessories that conflict
+    for _,v in ipairs(myChar:GetChildren()) do
+        if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") then
+            v:Destroy()
+        end
+    end
+
+    -- Apply humanoid description
     local desc = tHum:GetAppliedDescription()
     myHum:ApplyDescription(desc)
 
-    -- Replace Animate script
+    -- Replace Animate script with target
     local oldAnim = myChar:FindFirstChild("Animate")
     if oldAnim then oldAnim:Destroy() end
 
     local tAnim = tChar:FindFirstChild("Animate")
     if tAnim then
-        local newA = tAnim:Clone()
-        newA.Parent = myChar
+        tAnim:Clone().Parent = myChar
     end
 
-    -- Refresh animator
-    task.wait(0.1)
+    -- Rebuild humanoid rig
+    task.wait(0.2)
     myHum:BuildRigFromAttachments()
+end
+
+-- =======================================
+-- REVERT MORPH
+-- =======================================
+local function revertMorph()
+    if not originalDescription then return end
+    local char = player.Character
+    if not char then return end
+
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+
+    hum:ApplyDescription(originalDescription)
+
+    local oldAnim = char:FindFirstChild("Animate")
+    if oldAnim then oldAnim:Destroy() end
+
+    if originalAnimate then
+        originalAnimate:Clone().Parent = char
+    end
+
+    task.wait(0.2)
+    hum:BuildRigFromAttachments()
 end
 
 -- =======================================
@@ -186,7 +226,7 @@ local function createPlayerItem(plr)
     item.Size = UDim2.new(1,-10,0,70)
     item.BackgroundColor3 = Color3.fromRGB(35,35,35)
     item.Parent = scroll
-    Instance.new("UICorner", item).CornerRadius = UDim.new(0,10)
+    Instance.new("UICorner", item)
 
     local img = Instance.new("ImageLabel")
     img.Size = UDim2.new(0,45,0,45)
@@ -203,37 +243,30 @@ local function createPlayerItem(plr)
     nameLabel.TextColor3 = Color3.new(1,1,1)
     nameLabel.Font = Enum.Font.GothamBold
     nameLabel.TextSize = 14
-    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
     nameLabel.Parent = item
 
-    -- VIEW BUTTON
+    -- VIEW BTN
     local viewBtn = Instance.new("TextButton")
     viewBtn.Size = UDim2.new(0,50,0,25)
     viewBtn.Position = UDim2.new(1,-150,0.5,-12)
     viewBtn.BackgroundColor3 = Color3.fromRGB(255,200,60)
     viewBtn.Text = "View"
     viewBtn.TextColor3 = Color3.new(1,1,1)
-    viewBtn.Font = Enum.Font.GothamBold
-    viewBtn.TextSize = 14
     viewBtn.Parent = item
     Instance.new("UICorner", viewBtn)
 
     viewBtn.MouseButton1Click:Connect(function()
-        if plr.Character then
-            spectating = true
-            spectateTarget = plr
-        end
+        spectating = true
+        spectateTarget = plr
     end)
 
-    -- TP BUTTON
+    -- TP BTN
     local tpBtn = Instance.new("TextButton")
     tpBtn.Size = UDim2.new(0,50,0,25)
     tpBtn.Position = UDim2.new(1,-95,0.5,-12)
     tpBtn.BackgroundColor3 = Color3.fromRGB(60,120,255)
     tpBtn.Text = "TP"
     tpBtn.TextColor3 = Color3.new(1,1,1)
-    tpBtn.Font = Enum.Font.GothamBold
-    tpBtn.TextSize = 14
     tpBtn.Parent = item
     Instance.new("UICorner", tpBtn)
 
@@ -245,15 +278,13 @@ local function createPlayerItem(plr)
         end
     end)
 
-    -- CLONE BUTTON (FULL)
+    -- CLONE BTN
     local cloneBtn = Instance.new("TextButton")
     cloneBtn.Size = UDim2.new(0,50,0,25)
     cloneBtn.Position = UDim2.new(1,-40,0.5,-12)
     cloneBtn.BackgroundColor3 = Color3.fromRGB(255,120,60)
     cloneBtn.Text = "Clone"
     cloneBtn.TextColor3 = Color3.new(1,1,1)
-    cloneBtn.Font = Enum.Font.GothamBold
-    cloneBtn.TextSize = 14
     cloneBtn.Parent = item
     Instance.new("UICorner", cloneBtn)
 
@@ -262,7 +293,7 @@ local function createPlayerItem(plr)
     end)
 end
 
--- LOAD PLAYER LIST
+-- Load list
 for _,plr in ipairs(Players:GetPlayers()) do
     if plr ~= player then createPlayerItem(plr) end
 end
@@ -274,28 +305,51 @@ end)
 Players.PlayerRemoving:Connect(function(plr)
     for _,v in pairs(scroll:GetChildren()) do
         if v:IsA("Frame") then
-            local lbl = v:FindFirstChildWhichIsA("TextLabel")
-            if lbl and lbl.Text == plr.Name then v:Destroy() end
+            local t = v:FindFirstChildWhichIsA("TextLabel")
+            if t and t.Text == plr.Name then v:Destroy() end
         end
     end
 end)
 
+-- =======================================
 -- STOP VIEW BUTTON
-local unviewBtn = Instance.new("TextButton")
-unviewBtn.Size = UDim2.new(0,160,0,35)
-unviewBtn.Position = UDim2.new(0.5,-80,0.7,0)
-unviewBtn.BackgroundColor3 = Color3.fromRGB(120,120,50)
-unviewBtn.Text = "STOP VIEW"
-unviewBtn.TextColor3 = Color3.new(1,1,1)
-unviewBtn.Font = Enum.Font.GothamBold
-unviewBtn.TextSize = 14
-unviewBtn.Parent = frame
-Instance.new("UICorner", unviewBtn).CornerRadius = UDim.new(0,10)
+-- =======================================
+local stopBtn = Instance.new("TextButton")
+stopBtn.Size = UDim2.new(0,160,0,35)
+stopBtn.Position = UDim2.new(0.5,-80,0.70,0)
+stopBtn.BackgroundColor3 = Color3.fromRGB(120,120,50)
+stopBtn.Text = "STOP VIEW"
+stopBtn.TextColor3 = Color3.new(1,1,1)
+stopBtn.Font = Enum.Font.GothamBold
+stopBtn.TextSize = 14
+stopBtn.Parent = frame
+Instance.new("UICorner", stopBtn)
 
-unviewBtn.MouseButton1Click:Connect(function()
+stopBtn.MouseButton1Click:Connect(function()
     stopSpectate()
 end)
 
+-- =======================================
+-- REVERT MORPH BUTTON
+-- =======================================
+local revertBtn = Instance.new("TextButton")
+revertBtn.Size = UDim2.new(0,160,0,35)
+revertBtn.Position = UDim2.new(0.5,-80,0.83,0)
+revertBtn.BackgroundColor3 = Color3.fromRGB(90,40,40)
+revertBtn.Text = "REVERT MORPH"
+revertBtn.TextColor3 = Color3.new(1,1,1)
+revertBtn.Font = Enum.Font.GothamBold
+revertBtn.TextSize = 14
+revertBtn.Parent = frame
+Instance.new("UICorner", revertBtn)
+
+revertBtn.MouseButton1Click:Connect(function()
+    revertMorph()
+end)
+
+-- =======================================
+-- CLOSE GUI
+-- =======================================
 closeBtn.MouseButton1Click:Connect(function()
     stopSpectate()
     gui:Destroy()
