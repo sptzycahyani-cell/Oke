@@ -68,6 +68,7 @@ local function startFly()
     task.spawn(function()
         while flying and char.Parent do
             task.wait()
+            
             local camCF = camera.CFrame
             local moveVector = Vector3.new()
             local currentSpeed = flySpeed
@@ -125,38 +126,6 @@ task.spawn(function()
 end)
 
 -- =======================================
--- INTRO
--- =======================================
-do
-    local introGui = Instance.new("ScreenGui")
-    introGui.Name = "IntroAnimation"
-    introGui.Parent = player:WaitForChild("PlayerGui")
-
-    local introLabel = Instance.new("TextLabel")
-    introLabel.Size = UDim2.new(0, 300, 0, 50)
-    introLabel.Position = UDim2.new(0.5, -150, 0.4, 0)
-    introLabel.BackgroundTransparency = 1
-    introLabel.Text = "By : Xraxor"
-    introLabel.TextColor3 = Color3.fromRGB(40,40,40)
-    introLabel.Font = Enum.Font.GothamBold
-    introLabel.TextScaled = true
-    introLabel.Parent = introGui
-
-    TweenService:Create(introLabel, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-        {Position = UDim2.new(0.5, -150,0.42,0)}):Play()
-
-    TweenService:Create(introLabel, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-        {TextColor3 = Color3.fromRGB(0,0,0)}):Play()
-
-    task.wait(2)
-    local fade = TweenService:Create(introLabel, TweenInfo.new(0.4), {TextTransparency = 1})
-    fade:Play()
-    fade.Completed:Connect(function()
-        introGui:Destroy()
-    end)
-end
-
--- =======================================
 -- MAIN GUI
 -- =======================================
 local gui = Instance.new("ScreenGui")
@@ -165,8 +134,8 @@ gui.ResetOnSpawn = false
 gui.Parent = player.PlayerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 260, 0, 320)
-frame.Position = UDim2.new(0.4, -130,0.45,-130)
+frame.Size = UDim2.new(0, 260, 0, 360)
+frame.Position = UDim2.new(0.4, -130,0.45,-180)
 frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 frame.Active = true
 frame.Draggable = true
@@ -183,10 +152,51 @@ title.Font = Enum.Font.GothamBold
 title.TextSize = 16
 title.Parent = frame
 
+-- =======================================
+-- INFO PLAYER SENDIRI DI ATAS SUMMIT
+-- =======================================
+local myInfoFrame = Instance.new("Frame")
+myInfoFrame.Size = UDim2.new(0, 160, 0, 60)
+myInfoFrame.Position = UDim2.new(0.5, -80, 0.55, -50)
+myInfoFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+myInfoFrame.Parent = frame
+Instance.new("UICorner", myInfoFrame)
+
+local myAvatar = Instance.new("ImageLabel")
+myAvatar.Size = UDim2.new(0,45,0,45)
+myAvatar.Position = UDim2.new(0,5,0,5)
+myAvatar.BackgroundTransparency = 1
+myAvatar.Image = "rbxthumb://type=AvatarHeadShot&id="..player.UserId.."&w=150&h=150"
+myAvatar.Parent = myInfoFrame
+
+local myName = Instance.new("TextLabel")
+myName.Size = UDim2.new(1,-55,0,25)
+myName.Position = UDim2.new(0,55,0,5)
+myName.BackgroundTransparency = 1
+myName.Text = player.Name
+myName.TextColor3 = Color3.new(1,1,1)
+myName.Font = Enum.Font.GothamBold
+myName.TextSize = 14
+myName.TextXAlignment = Enum.TextXAlignment.Left
+myName.Parent = myInfoFrame
+
+local myUsername = Instance.new("TextLabel")
+myUsername.Size = UDim2.new(1,-55,0,25)
+myUsername.Position = UDim2.new(0,55,0,30)
+myUsername.BackgroundTransparency = 1
+myUsername.Text = "@"..player.DisplayName
+myUsername.TextColor3 = Color3.fromRGB(180,180,180)
+myUsername.Font = Enum.Font.Gotham
+myUsername.TextSize = 12
+myUsername.TextXAlignment = Enum.TextXAlignment.Left
+myUsername.Parent = myInfoFrame
+
+-- =======================================
 -- SUMMIT / CLOSE
+-- =======================================
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0,160,0,40)
-closeBtn.Position = UDim2.new(0.5,-80,0.65,-50)
+closeBtn.Position = UDim2.new(0.5,-80,0.65,0)
 closeBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
 closeBtn.Text = "SUMMIT"
 closeBtn.TextColor3 = Color3.new(1,1,1)
@@ -194,45 +204,6 @@ closeBtn.Font = Enum.Font.GothamBold
 closeBtn.TextSize = 15
 closeBtn.Parent = frame
 Instance.new("UICorner", closeBtn)
-
--- =======================================
--- PLAYER AVATAR INFO ABOVE SUMMIT BUTTON
--- =======================================
-local avatarFrame = Instance.new("Frame")
-avatarFrame.Size = UDim2.new(0, 160, 0, 60)
-avatarFrame.Position = UDim2.new(0.5, -80, 0.55, -50) -- Tepat di atas closeBtn
-avatarFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
-avatarFrame.Parent = frame
-Instance.new("UICorner", avatarFrame)
-
-local avatarImg = Instance.new("ImageLabel")
-avatarImg.Size = UDim2.new(0,50,0,50)
-avatarImg.Position = UDim2.new(0,5,0,5)
-avatarImg.BackgroundTransparency = 1
-avatarImg.Image = "rbxthumb://type=AvatarHeadShot&id="..player.UserId.."&w=150&h=150"
-avatarImg.Parent = avatarFrame
-
-local nameLabel = Instance.new("TextLabel")
-nameLabel.Size = UDim2.new(1,-60,0,25)
-nameLabel.Position = UDim2.new(0,55,0,5)
-nameLabel.BackgroundTransparency = 1
-nameLabel.Text = player.Name
-nameLabel.TextColor3 = Color3.new(1,1,1)
-nameLabel.Font = Enum.Font.GothamBold
-nameLabel.TextSize = 14
-nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-nameLabel.Parent = avatarFrame
-
-local usernameLabel = Instance.new("TextLabel")
-usernameLabel.Size = UDim2.new(1,-60,0,25)
-usernameLabel.Position = UDim2.new(0,55,0,30)
-usernameLabel.BackgroundTransparency = 1
-usernameLabel.Text = "@"..player.DisplayName
-usernameLabel.TextColor3 = Color3.fromRGB(180,180,180)
-usernameLabel.Font = Enum.Font.Gotham
-usernameLabel.TextSize = 12
-usernameLabel.TextXAlignment = Enum.TextXAlignment.Left
-usernameLabel.Parent = avatarFrame
 
 -- =======================================
 -- PLAYER LIST PANEL
@@ -364,7 +335,6 @@ local function createPlayerItem(plr)
     nameLabel.TextSize = 14
     nameLabel.Parent = item
 
-    -- VIEW BTN
     local viewBtn = Instance.new("TextButton")
     viewBtn.Size = UDim2.new(0,50,0,25)
     viewBtn.Position = UDim2.new(1,-150,0.5,-12)
@@ -380,7 +350,6 @@ local function createPlayerItem(plr)
         spectateTarget = plr
     end)
 
-    -- TP BTN
     local tpBtn = Instance.new("TextButton")
     tpBtn.Size = UDim2.new(0,50,0,25)
     tpBtn.Position = UDim2.new(1,-95,0.5,-12)
@@ -398,7 +367,6 @@ local function createPlayerItem(plr)
         end
     end)
 
-    -- CLONE BTN
     local cloneBtn = Instance.new("TextButton")
     cloneBtn.Size = UDim2.new(0,50,0,25)
     cloneBtn.Position = UDim2.new(1,-40,0.5,-12)
@@ -436,7 +404,7 @@ end)
 -- =======================================
 flyBtn = Instance.new("TextButton")
 flyBtn.Size = UDim2.new(0,160,0,35)
-flyBtn.Position = UDim2.new(0.5,-80,0.70,-50)
+flyBtn.Position = UDim2.new(0.5,-80,0.72,0)
 flyBtn.BackgroundColor3 = Color3.fromRGB(0,150,150)
 flyBtn.Text = "FLY (OFF)"
 flyBtn.TextColor3 = Color3.new(1,1,1)
@@ -462,11 +430,42 @@ end)
 -- =======================================
 local stopBtn = Instance.new("TextButton")
 stopBtn.Size = UDim2.new(0,160,0,35)
-stopBtn.Position = UDim2.new(0.5,-80,0.70,0)
+stopBtn.Position = UDim2.new(0.5,-80,0.78,0)
 stopBtn.BackgroundColor3 = Color3.fromRGB(120,120,50)
 stopBtn.Text = "STOP VIEW"
 stopBtn.TextColor3 = Color3.new(1,1,1)
 stopBtn.Font = Enum.Font.GothamBold
 stopBtn.TextSize = 14
 stopBtn.Parent = frame
-Instance.new("UICorner", stop
+Instance.new("UICorner", stopBtn)
+
+stopBtn.MouseButton1Click:Connect(function()
+    stopSpectate()
+end)
+
+-- =======================================
+-- REVERT MORPH BUTTON
+-- =======================================
+local revertBtn = Instance.new("TextButton")
+revertBtn.Size = UDim2.new(0,160,0,35)
+revertBtn.Position = UDim2.new(0.5,-80,0.84,0)
+revertBtn.BackgroundColor3 = Color3.fromRGB(90,40,40)
+revertBtn.Text = "REVERT MORPH"
+revertBtn.TextColor3 = Color3.new(1,1,1)
+revertBtn.Font = Enum.Font.GothamBold
+revertBtn.TextSize = 14
+revertBtn.Parent = frame
+Instance.new("UICorner", revertBtn)
+
+revertBtn.MouseButton1Click:Connect(function()
+    revertMorph()
+end)
+
+-- =======================================
+-- CLOSE GUI
+-- =======================================
+closeBtn.MouseButton1Click:Connect(function()
+    stopSpectate()
+    stopFly()
+    gui:Destroy()
+end)
