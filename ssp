@@ -30,7 +30,6 @@ local function stopFly()
         local hum = char:FindFirstChildOfClass("Humanoid")
         if hum then
             hum.PlatformStand = false
-            -- Kembalikan CameraSubject ke Humanoid jika tidak spectating
             if not spectating then
                 camera.CameraSubject = hum
             end
@@ -54,12 +53,11 @@ local function startFly()
     local root = char:FindFirstChild("HumanoidRootPart")
     if not (hum and root) then return end
     
-    -- Hentikan spectate jika sedang aktif
     if spectating then stopSpectate() end
 
     flying = true
     hum.PlatformStand = true
-    camera.CameraSubject = root -- Kamera mengikuti HumanoidRootPart
+    camera.CameraSubject = root
 
     local velocity = Instance.new("BodyVelocity")
     velocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
@@ -70,7 +68,6 @@ local function startFly()
     task.spawn(function()
         while flying and char.Parent do
             task.wait()
-            
             local camCF = camera.CFrame
             local moveVector = Vector3.new()
             local currentSpeed = flySpeed
@@ -78,16 +75,13 @@ local function startFly()
             local moveDir = player:GetMoveDirection()
             local relativeMoveDir = camCF:VectorToObjectSpace(moveDir)
             
-            -- Gerakan Maju/Mundur (W/S) dan Kiri/Kanan (A/D)
             moveVector += camCF.LookVector * relativeMoveDir.Z 
             moveVector += camCF.RightVector * relativeMoveDir.X
             
-            -- Naik (Space) - Menggunakan kontrol Jump
             if player:GetControls().MoveState == Enum.ComputerMoveState.Jump then
                 moveVector += Vector3.new(0, 1, 0)
             end
             
-            -- Gerakan cepat (Shift) - Menggunakan kontrol Sprint
             if player:GetControls().MoveState == Enum.ComputerMoveState.Sprint then
                 currentSpeed = flySpeed * 2 
             end
@@ -99,7 +93,6 @@ local function startFly()
             end
         end
         
-        -- Hapus BodyVelocity jika loop selesai
         if root and root:FindFirstChild("FlyVelocity") then
             root.FlyVelocity:Destroy()
         end
@@ -110,7 +103,6 @@ local function stopSpectate()
     spectating = false
     spectateTarget = nil
     
-    -- Pastikan fly juga mati saat berhenti spectate
     if flying then stopFly() end 
 
     if player.Character then
@@ -204,6 +196,45 @@ closeBtn.Parent = frame
 Instance.new("UICorner", closeBtn)
 
 -- =======================================
+-- PLAYER AVATAR INFO ABOVE SUMMIT BUTTON
+-- =======================================
+local avatarFrame = Instance.new("Frame")
+avatarFrame.Size = UDim2.new(0, 160, 0, 60)
+avatarFrame.Position = UDim2.new(0.5, -80, 0.55, -50) -- Tepat di atas closeBtn
+avatarFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+avatarFrame.Parent = frame
+Instance.new("UICorner", avatarFrame)
+
+local avatarImg = Instance.new("ImageLabel")
+avatarImg.Size = UDim2.new(0,50,0,50)
+avatarImg.Position = UDim2.new(0,5,0,5)
+avatarImg.BackgroundTransparency = 1
+avatarImg.Image = "rbxthumb://type=AvatarHeadShot&id="..player.UserId.."&w=150&h=150"
+avatarImg.Parent = avatarFrame
+
+local nameLabel = Instance.new("TextLabel")
+nameLabel.Size = UDim2.new(1,-60,0,25)
+nameLabel.Position = UDim2.new(0,55,0,5)
+nameLabel.BackgroundTransparency = 1
+nameLabel.Text = player.Name
+nameLabel.TextColor3 = Color3.new(1,1,1)
+nameLabel.Font = Enum.Font.GothamBold
+nameLabel.TextSize = 14
+nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+nameLabel.Parent = avatarFrame
+
+local usernameLabel = Instance.new("TextLabel")
+usernameLabel.Size = UDim2.new(1,-60,0,25)
+usernameLabel.Position = UDim2.new(0,55,0,30)
+usernameLabel.BackgroundTransparency = 1
+usernameLabel.Text = "@"..player.DisplayName
+usernameLabel.TextColor3 = Color3.fromRGB(180,180,180)
+usernameLabel.Font = Enum.Font.Gotham
+usernameLabel.TextSize = 12
+usernameLabel.TextXAlignment = Enum.TextXAlignment.Left
+usernameLabel.Parent = avatarFrame
+
+-- =======================================
 -- PLAYER LIST PANEL
 -- =======================================
 local openListBtn = Instance.new("ImageButton")
@@ -253,7 +284,6 @@ local function fullClone(targetPlr)
     local tHum = tChar:FindFirstChildOfClass("Humanoid")
     if not (myHum and tHum) then return end
 
-    -- Save original (ONE TIME ONLY)
     if not originalDescription then
         originalDescription = myHum:GetAppliedDescription()
         local anim = myChar:FindFirstChild("Animate")
@@ -262,18 +292,15 @@ local function fullClone(targetPlr)
         end
     end
 
-    -- Remove accessories that conflict
     for _,v in ipairs(myChar:GetChildren()) do
         if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") then
             v:Destroy()
         end
     end
 
-    -- Apply humanoid description
     local desc = tHum:GetAppliedDescription()
     myHum:ApplyDescription(desc)
 
-    -- Replace Animate script with target
     local oldAnim = myChar:FindFirstChild("Animate")
     if oldAnim then oldAnim:Destroy() end
 
@@ -282,7 +309,6 @@ local function fullClone(targetPlr)
         tAnim:Clone().Parent = myChar
     end
 
-    -- Rebuild humanoid rig
     task.wait(0.2)
     myHum:BuildRigFromAttachments()
 end
@@ -349,7 +375,7 @@ local function createPlayerItem(plr)
     Instance.new("UICorner", viewBtn)
 
     viewBtn.MouseButton1Click:Connect(function()
-        if flying then stopFly() end -- Hentikan Fly saat View
+        if flying then stopFly() end
         spectating = true
         spectateTarget = plr
     end)
@@ -410,7 +436,7 @@ end)
 -- =======================================
 flyBtn = Instance.new("TextButton")
 flyBtn.Size = UDim2.new(0,160,0,35)
-flyBtn.Position = UDim2.new(0.5,-80,0.70,-50) -- Diposisikan sebelum STOP VIEW
+flyBtn.Position = UDim2.new(0.5,-80,0.70,-50)
 flyBtn.BackgroundColor3 = Color3.fromRGB(0,150,150)
 flyBtn.Text = "FLY (OFF)"
 flyBtn.TextColor3 = Color3.new(1,1,1)
@@ -431,7 +457,6 @@ flyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-
 -- =======================================
 -- STOP VIEW BUTTON
 -- =======================================
@@ -444,35 +469,4 @@ stopBtn.TextColor3 = Color3.new(1,1,1)
 stopBtn.Font = Enum.Font.GothamBold
 stopBtn.TextSize = 14
 stopBtn.Parent = frame
-Instance.new("UICorner", stopBtn)
-
-stopBtn.MouseButton1Click:Connect(function()
-    stopSpectate()
-end)
-
--- =======================================
--- REVERT MORPH BUTTON
--- =======================================
-local revertBtn = Instance.new("TextButton")
-revertBtn.Size = UDim2.new(0,160,0,35)
-revertBtn.Position = UDim2.new(0.5,-80,0.83,0)
-revertBtn.BackgroundColor3 = Color3.fromRGB(90,40,40)
-revertBtn.Text = "REVERT MORPH"
-revertBtn.TextColor3 = Color3.new(1,1,1)
-revertBtn.Font = Enum.Font.GothamBold
-revertBtn.TextSize = 14
-revertBtn.Parent = frame
-Instance.new("UICorner", revertBtn)
-
-revertBtn.MouseButton1Click:Connect(function()
-    revertMorph()
-end)
-
--- =======================================
--- CLOSE GUI
--- =======================================
-closeBtn.MouseButton1Click:Connect(function()
-    stopSpectate()
-    stopFly() -- Pastikan fly juga dihentikan saat GUI ditutup
-    gui:Destroy()
-end)
+Instance.new("UICorner", stop
